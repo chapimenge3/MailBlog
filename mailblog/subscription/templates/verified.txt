@@ -1,0 +1,12 @@
+Dear User,
+
+Your email has been verified successfully.
+
+You are now part of our vibrant community, and you will receive email notifications
+whenever a new blog post is published on my website. Stay up to date with the
+latest news, insights, and articles by subscribing to my newsletter
+
+If you wish to unsubscribe from my newsletter, you can do so by clicking the link {unsubscribe_url}
+
+Regards,
+Chapi Menge

@@ -1,0 +1,92 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  MailBlog is a serverless application designed to streamline blog subscriptions and newsletter distribution
+
+Globals:
+  Function:
+    Timeout: 3
+    MemorySize: 128
+    Runtime: python3.10
+
+  Api:
+    Cors:
+      AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
+      AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+      AllowOrigin: "'*'"
+      AllowCredentials: "'*'"
+      MaxAge: "'600'"
+
+Parameters:
+  FromEmail:
+    Type: String
+    Description: The email address that will be used to send emails
+    Default: chapimenge3@gmail.com
+    AllowedPattern: ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$
+    ConstraintDescription: must be a valid email address.
+  Domain:
+    Type: String
+    Description: The domain name that your website hosted and implement the Subscription API
+    Default: chapimenge.com
+    AllowedPattern: ^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$
+    ConstraintDescription: must be a valid domain name.
+
+Resources:
+  UserTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: user
+      AttributeDefinitions:
+        - AttributeName: email
+          AttributeType: S
+      KeySchema:
+        - AttributeName: email
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+
+  SESIdentity:
+    Type: AWS::SES::EmailIdentity
+    Properties:
+      EmailIdentity: !Ref FromEmail
+
+  SubscriptionFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: mailblog-subscription
+      CodeUri: subscription/
+      Handler: handler.lambda_handler
+      Events:
+        subscribe:
+          Type: Api
+          Properties:
+            Path: /subscribe
+            Method: post
+        unsubscribe:
+          Type: Api
+          Properties:
+            Path: /unsubscribe
+            Method: get
+        verify:
+          Type: Api
+          Properties:
+            Path: /verify
+            Method: get
+      Environment:
+        Variables:
+          USER_TABLE: !Ref UserTable
+          FROM_EMAIL: !Ref FromEmail
+          DOMAIN: !Ref Domain
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref UserTable
+        - Statement:
+            - Effect: Allow
+              Action:
+                - ses:SendEmail
+                - ses:SendRawEmail
+              Resource: "*"
+
+Outputs:
+  API:
+    Description: "API Gateway endpoint URL for Prod stage"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
