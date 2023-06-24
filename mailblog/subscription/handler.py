@@ -121,6 +121,7 @@ def subscribe(event: dict, _):
                 "headers": headers,
                 "body": json.dumps({"message": "Email is required"}),
             }
+        logger.info("New subscription request %s", email)
         user = get_user(email)
         if user and user.get("verified"):
             return {
@@ -149,7 +150,9 @@ def subscribe(event: dict, _):
 
         with open("templates/verify.txt") as f:
             text = f.read()
-        text = text.replace("{{verify_url}}", verify_url)
+        text = text.replace("{{verify_url}}", verify_url).replace(
+            "{{unsubscribe_url}}", unsubscribe_url
+        )
 
         body = {"Html": {"Data": html}, "Text": {"Data": text}}
         send_email(email, "Verify your email", body)
